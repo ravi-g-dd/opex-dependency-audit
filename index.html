@@ -200,6 +200,25 @@
   .source-card-name { font-weight: 600; font-size: 14px; }
   .source-card-count { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
   .footer { color: var(--text-tertiary); font-size: 12px; margin-top: 32px; }
+  a.tier-link {
+    text-decoration: none;
+    color: inherit;
+  }
+  a.tier-link .pill-sm {
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  a.tier-link:hover .pill-sm {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  @keyframes rubric-flash {
+    0% { background: rgba(88,166,255,0.25); }
+    100% { background: transparent; }
+  }
+  tr.rubric-highlight {
+    animation: rubric-flash 1.5s ease-out;
+  }
   .header-row {
     display: flex;
     justify-content: space-between;
@@ -309,7 +328,7 @@
     <td><span class="pill-sm critical">Tier 1 (V2_CRITICAL)</span></td>
     <td>Data available by 06:00 UTC daily</td>
     <td>No formal SLA; delays cascade to 30+ DAGs</td>
-    <td><span class="pill-sm t0">T0</span></td>
+    <td><a class="tier-link" href="#rubric-t0" onclick="flashRubric('rubric-t0')"><span class="pill-sm t0">T0</span></a></td>
     <td>#data-integrations-support<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations Team (Fivetran admin)</span></td>
   </tr>
   <tr class="row-danger">
@@ -319,7 +338,7 @@
     <td><span class="pill-sm critical">Tier 1 (CRITICAL)</span></td>
     <td>Data available within 90 min of contact close</td>
     <td>Hourly DAG but no upstream freshness guarantee</td>
-    <td><span class="pill-sm t0">T0</span></td>
+    <td><a class="tier-link" href="#rubric-t0" onclick="flashRubric('rubric-t0')"><span class="pill-sm t0">T0</span></a></td>
     <td>#data-integrations-support<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations Team (Fivetran admin)</span></td>
   </tr>
   <tr class="row-warning">
@@ -329,7 +348,7 @@
     <td><span class="pill-sm high">Tier 1 (priority: 200)</span></td>
     <td>Data available by 10:00 UTC daily</td>
     <td>No explicit SLA on data_integrations_3p.checkr_reports_v1</td>
-    <td><span class="pill-sm t1">T1</span></td>
+    <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#data-integrations-3p<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations 3P Team</span></td>
   </tr>
   <tr class="row-warning">
@@ -339,7 +358,7 @@
     <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
     <td>Data available by 09:00 UTC daily</td>
     <td>Sensor timeout is 2h but no upstream commitment</td>
-    <td><span class="pill-sm t1">T1</span></td>
+    <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#risk-data-platform<br><span style="color:var(--text-tertiary);font-size:11px">POC: Risk Data Platform Team</span></td>
   </tr>
   <tr class="row-warning">
@@ -349,7 +368,7 @@
     <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
     <td>API uptime 99.9%; rate limit headroom</td>
     <td>No SLA; no circuit breaker; API token in Vault</td>
-    <td><span class="pill-sm t1">T1</span></td>
+    <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Opex Data Eng (API owner)</span></td>
   </tr>
   <tr class="row-warning">
@@ -359,7 +378,7 @@
     <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
     <td>API uptime 99.9%; rate limit headroom</td>
     <td>No SLA; concurrent workers may hit rate limits</td>
-    <td><span class="pill-sm t1">T1</span></td>
+    <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Opex Data Eng (API owner)</span></td>
   </tr>
   <tr>
@@ -369,7 +388,7 @@
     <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm t2">T2</span></td>
+    <td><a class="tier-link" href="#rubric-t2" onclick="flashRubric('rubric-t2')"><span class="pill-sm t2">T2</span></a></td>
     <td>#observe-ai-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: Observe AI Account Rep + DI Team</span></td>
   </tr>
   <tr>
@@ -379,7 +398,7 @@
     <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm t2">T2</span></td>
+    <td><a class="tier-link" href="#rubric-t2" onclick="flashRubric('rubric-t2')"><span class="pill-sm t2">T2</span></a></td>
     <td>#maestroqa-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: MaestroQA Account Rep + DI Team</span></td>
   </tr>
   <tr>
@@ -389,7 +408,7 @@
     <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm t2">T2</span></td>
+    <td><a class="tier-link" href="#rubric-t2" onclick="flashRubric('rubric-t2')"><span class="pill-sm t2">T2</span></a></td>
     <td>#cornerstone-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: Cornerstone Account Rep + DI Team</span></td>
   </tr>
   <tr>
@@ -399,7 +418,7 @@
     <td><span class="pill-sm critical">Tier 1 (criticality: high)</span></td>
     <td>Manual refresh; no SLA needed</td>
     <td>N/A (manual source)</td>
-    <td><span class="pill-sm t3">T3</span></td>
+    <td><a class="tier-link" href="#rubric-t3" onclick="flashRubric('rubric-t3')"><span class="pill-sm t3">T3</span></a></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Sheet owners (see DAG contacts)</span></td>
   </tr>
   <tr>
@@ -409,7 +428,7 @@
     <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
     <td>Weekly refresh acceptable</td>
     <td>N/A (weekly schedule sufficient)</td>
-    <td><span class="pill-sm t3">T3</span></td>
+    <td><a class="tier-link" href="#rubric-t3" onclick="flashRubric('rubric-t3')"><span class="pill-sm t3">T3</span></a></td>
     <td>#fraud-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Fraud Data Eng Team</span></td>
   </tr>
   <tr>
@@ -419,7 +438,7 @@
     <td><span class="pill-sm high">Tier 1 (criticality: medium)</span></td>
     <td>Data available within 2h of trace emission</td>
     <td>Temporary solution; pending TPDI connector</td>
-    <td><span class="pill-sm t3">T3</span></td>
+    <td><a class="tier-link" href="#rubric-t3" onclick="flashRubric('rubric-t3')"><span class="pill-sm t3">T3</span></a></td>
     <td>#support-automation-ai<br><span style="color:var(--text-tertiary);font-size:11px">POC: Support Automation AI Team</span></td>
   </tr>
 </tbody>
@@ -707,7 +726,7 @@
 
 <hr class="divider">
 
-<h2>Suggested Priority Rubric</h2>
+<h2 id="rubric">Suggested Priority Rubric</h2>
 <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">The suggested priorities (T0&ndash;T3) were derived by scoring each source system across three dimensions:</p>
 <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;font-style:italic;"><strong style="color:var(--text)">Formula:</strong> Blast Radius &times; Ingestion Fragility &times; Criticality Flags in Code = Suggested Tier</p>
 
@@ -723,7 +742,7 @@
   </tr>
 </thead>
 <tbody>
-  <tr class="row-danger">
+  <tr class="row-danger" id="rubric-t0">
     <td><span class="pill-sm t0">T0</span></td>
     <td><strong>Very High.</strong> 30+ downstream DAGs depend on a single dimension (Salesforce). Amazon Connect CTR feeds routing, surveys, and SLA metrics &mdash; any delay cascades across nearly every support, fraud, and QA pipeline.</td>
     <td><strong>High.</strong> Both flow through Fivetran with no formal upstream SLA. A sync delay or schema drift has no fallback.</td>
@@ -734,7 +753,7 @@
       <strong>Resolution SLA:</strong> Immediate
     </td>
   </tr>
-  <tr class="row-warning">
+  <tr class="row-warning" id="rubric-t1">
     <td><span class="pill-sm t1">T1</span></td>
     <td><strong>High.</strong> Checkr has 10 sub-report DAGs downstream. Sprout Social spans 8 pipelines. Stripe Radar feeds fraud scoring.</td>
     <td><strong>High.</strong> Sprout Social and Persona use direct REST API calls via PythonOperator with no circuit breaker or fallback cache. An API outage, rate limit, or token expiry causes full DAG failure with no partial recovery.</td>
@@ -745,7 +764,7 @@
       <strong>Resolution SLA:</strong> 1 business day
     </td>
   </tr>
-  <tr>
+  <tr id="rubric-t2">
     <td><span class="pill-sm t2">T2</span></td>
     <td><strong>Moderate.</strong> 2&ndash;4 pipelines each. Observe AI&rsquo;s unified QA aggregation has 9 upstream sensors but is self-contained within the QA domain.</td>
     <td><strong>Low.</strong> All use Snowflake data shares &mdash; inherently stable (no auth tokens, no rate limits, no API calls). Risk is limited to vendor-side data freshness.</td>
@@ -756,7 +775,7 @@
       <strong>Resolution SLA:</strong> 2&ndash;3 business days
     </td>
   </tr>
-  <tr>
+  <tr id="rubric-t3">
     <td><span class="pill-sm t3">T3</span></td>
     <td><strong>Low.</strong> 1&ndash;3 pipelines each. Downstream impact is narrow or domain-specific.</td>
     <td><strong>Low.</strong> Google Sheets are manually maintained (delays are human-driven, not systemic). MaxMind runs weekly and the cadence is sufficient. Arize AI is explicitly a temporary solution pending a TPDI connector.</td>
@@ -811,6 +830,14 @@ function filterBySource(source, btn) {
   });
   btn.className = 'pill active';
   applyFilters();
+}
+
+function flashRubric(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.classList.remove('rubric-highlight');
+  void row.offsetWidth;
+  row.classList.add('rubric-highlight');
 }
 
 function filterRows(risk, btn) {
