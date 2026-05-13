@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opex ETL — 3rd Party Dependency Audit</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-tertiary: #6e7681;
+    --accent: #58a6ff;
+    --danger: #f85149;
+    --danger-bg: rgba(248,81,73,0.1);
+    --warning: #d29922;
+    --warning-bg: rgba(210,153,34,0.1);
+    --success: #3fb950;
+    --success-bg: rgba(63,185,80,0.1);
+    --info: #58a6ff;
+    --info-bg: rgba(88,166,255,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 32px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 32px 0 16px; color: var(--text); }
+  h3 { font-size: 16px; font-weight: 600; margin: 16px 0 8px; }
+  .subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 24px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value { font-size: 32px; font-weight: 700; }
+  .stat-value.danger { color: var(--danger); }
+  .stat-value.warning { color: var(--warning); }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-left: 3px solid;
+  }
+  .callout.danger { background: var(--danger-bg); border-color: var(--danger); }
+  .callout.warning { background: var(--warning-bg); border-color: var(--warning); }
+  .callout-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .callout.danger .callout-title { color: var(--danger); }
+  .callout.warning .callout-title { color: var(--warning); }
+  .callout p, .callout li { font-size: 13px; color: var(--text-secondary); margin: 4px 0; }
+  .callout strong { color: var(--text); font-weight: 600; }
+  .callout ol { padding-left: 20px; }
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .pill:hover { border-color: var(--text-secondary); }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .pill.active-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .pill.active-warning { background: var(--warning); color: #000; border-color: var(--warning); }
+  .pill.active-success { background: var(--success); color: #000; border-color: var(--success); }
+  .pill-sm {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .pill-sm.critical { background: rgba(248,81,73,0.15); color: var(--danger); }
+  .pill-sm.high { background: rgba(210,153,34,0.15); color: var(--warning); }
+  .pill-sm.default { background: rgba(139,148,158,0.15); color: var(--text-secondary); }
+  .pill-sm.p0 { background: var(--danger); color: #fff; }
+  .pill-sm.p1 { background: var(--warning); color: #000; }
+  .pill-sm.p2 { background: rgba(88,166,255,0.2); color: var(--accent); }
+  .pill-sm.p3 { background: rgba(139,148,158,0.2); color: var(--text-secondary); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  thead th {
+    background: var(--surface-2);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  tbody tr.row-danger { background: var(--danger-bg); }
+  tbody tr.row-warning { background: var(--warning-bg); }
+  .notes-text { color: var(--text-secondary); font-size: 12px; max-width: 320px; }
+  .dag-name { font-weight: 500; font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 12px; }
+  .target-name { font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 11px; color: var(--text-secondary); word-break: break-all; max-width: 220px; }
+  .upstream-text { font-size: 12px; max-width: 240px; word-break: break-word; }
+  .source-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .source-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .source-card-name { font-weight: 600; font-size: 14px; }
+  .source-card-count { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .footer { color: var(--text-tertiary); font-size: 12px; margin-top: 32px; }
+  @media (max-width: 900px) {
+    body { padding: 16px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .source-cards { grid-template-columns: 1fr; }
+    table { font-size: 12px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; padding: 16px; }
+    .stat-card, .source-card, table { border-color: #ccc; }
+    .stat-card, .source-card { background: #f9f9f9; }
+    thead th { background: #eee; color: #333; }
+    .callout.danger { background: #fee; }
+    .callout.warning { background: #fef3cd; }
+    .pill { display: none; }
+    .filter-bar { display: none; }
+    tbody tr.row-danger { background: #fee; }
+    tbody tr.row-warning { background: #fef3cd; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Opex ETL: 3rd Party Dependency Audit</h1>
+<p class="subtitle">Data Contract reference for the Data Integrations team &middot; Scanned from airflow/custom_dags/opex/etl/ &middot; 2,262 files audited</p>
+
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-value">32</div><div class="stat-label">Total Dependencies</div></div>
+  <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">3rd Party Sources</div></div>
+  <div class="stat-card"><div class="stat-value danger">9</div><div class="stat-label">High Risk</div></div>
+  <div class="stat-card"><div class="stat-value warning">4</div><div class="stat-label">Missing Explicit Tier</div></div>
+</div>
+
+<hr class="divider">
+
+<div class="callout danger">
+  <div class="callout-title">Single Points of Failure Identified</div>
+  <p><strong>dimension_salesforce_users</strong> &mdash; 30+ downstream DAGs depend on this single dimension. A delay in the Salesforce Fivetran sync at 07:15 UTC cascades across nearly every support, fraud, and QA pipeline. This is the primary cause of the dimension delivery delays.</p>
+  <br>
+  <p><strong>fact_salesforce_amazon_connect_contact_trace (Fivetran)</strong> &mdash; The sole upstream source for Amazon Connect CTR data feeding routing profiles, surveys, and SLA metrics. Any Fivetran sync delay or schema drift causes missing data in Amazon Connect.</p>
+  <br>
+  <p><strong>Sprout Social / Persona API calls</strong> &mdash; Direct REST API calls via PythonOperator. No retry circuit breaker, no fallback cache. API rate limits, token expiry, or 3rd party outage = full DAG failure with no partial recovery.</p>
+</div>
+
+<hr class="divider">
+
+<h2>Dependency Inventory</h2>
+
+<div class="filter-bar">
+  <span class="filter-label">Filter by risk:</span>
+  <button class="pill active" onclick="filterRows('all', this)">All (32)</button>
+  <button class="pill" onclick="filterRows('high', this)">High (9)</button>
+  <button class="pill" onclick="filterRows('medium', this)">Medium (11)</button>
+  <button class="pill" onclick="filterRows('low', this)">Low (12)</button>
+</div>
+
+<table id="dep-table">
+<thead>
+  <tr>
+    <th>3rd Party Source</th>
+    <th>Upstream Dependency</th>
+    <th>Pipeline / DAG</th>
+    <th>Target Data Asset</th>
+    <th>Current Tier</th>
+    <th>Notes</th>
+  </tr>
+</thead>
+<tbody>
+  <tr class="row-danger" data-risk="high">
+    <td>Amazon Connect</td>
+    <td class="upstream-text">proddb.public.fact_salesforce_amazon_connect_contact_trace (Fivetran/DI sync)</td>
+    <td class="dag-name">fact_amazon_connect_contact_trace_enriched</td>
+    <td class="target-name">edw.opex.fact_amazon_connect_contact_trace_enriched</td>
+    <td><span class="pill-sm critical">Tier 1 (CRITICAL)</span></td>
+    <td class="notes-text">CRITICAL: Core Amazon Connect CTR data. Uses EDW_OPEX_DEFAULT_DAG_ARGS_CRITICAL + criticality: high. Hourly schedule. Directly related to Amazon Connect reliability issues.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Amazon Connect</td>
+    <td class="upstream-text">proddb.public.fact_salesforce_amazon_connect_contact_trace + edw.opex.dimension_salesforce_users</td>
+    <td class="dag-name">fact_opex_amazon_connect_routing_profiles</td>
+    <td class="target-name">edw.opex.fact_opex_amazon_connect_routing_profiles</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Amazon Connect routing profiles for Support & Voice Ordering. Depends on dimension_salesforce_users delivery.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Amazon Connect</td>
+    <td class="upstream-text">edw.opex.fact_opex_amazon_connect_routing_profiles</td>
+    <td class="dag-name">fact_opex_amazon_connect_routing_profiles_agg</td>
+    <td class="target-name">edw.opex.fact_opex_amazon_connect_routing_profiles_agg</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Downstream aggregation. Cascading delay risk from routing_profiles.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.salesforce_user, fact_salesforce_case_history_raw, edw.consumer.fact_employees</td>
+    <td class="dag-name">dimension_salesforce_users</td>
+    <td class="target-name">edw.opex.dimension_salesforce_users</td>
+    <td><span class="pill-sm critical">Tier 1 (V2_CRITICAL)</span></td>
+    <td class="notes-text">CRITICAL DIMENSION: 30+ downstream DAGs depend on this. Single point of failure. Root cause of dimension delivery delays. criticality: high, priority_weight: 200.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.fact_salesforce_case_history_raw + 6 more Salesforce tables + Amazon Connect CTR</td>
+    <td class="dag-name">dimension_salesforce_surveys</td>
+    <td class="target-name">edw.opex.dimension_salesforce_surveys</td>
+    <td><span class="pill-sm high">Tier 1 (criticality: high)</span></td>
+    <td class="notes-text">Complex DAG with 12 upstream sensors including Amazon Connect CTR. Related to dimension delivery delays.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.fact_salesforce_live_chat_transcript, fact_salesforce_transcript, fact_salesforce_email_message, fact_salesforce_socialpost</td>
+    <td class="dag-name">fact_salesforce_support_sla</td>
+    <td class="target-name">edw.opex.fact_salesforce_support_sla</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Core SLA metrics. Depends on 5 upstream Salesforce tables. Related to dimension delivery delays.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.salesforce_case, fact_salesforce_case_history_raw</td>
+    <td class="dag-name">dimension_salesforce_tasks</td>
+    <td class="target-name">edw.opex.dimension_salesforce_tasks</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Salesforce tasks dimension. Multiple downstream DAGs (Maestro QA, Cornerstone).</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.salesforce_case, fact_salesforce_case_history_raw</td>
+    <td class="dag-name">dimension_salesforce_users_snapshot</td>
+    <td class="target-name">edw.opex.dimension_salesforce_users_snapshot</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">SCD snapshot of the users dimension.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Salesforce (Fivetran)</td>
+    <td class="upstream-text">proddb.public.salesforce_case, fact_salesforce_case_history_raw</td>
+    <td class="dag-name">dimension_salesforce_touches</td>
+    <td class="target-name">edw.opex.dimension_salesforce_touches</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Salesforce touches dimension table.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Assembled (API)</td>
+    <td class="upstream-text">External DAG: assembled_daily (assembled_activities_daily_upload_completed)</td>
+    <td class="dag-name">fact_assembled_activities</td>
+    <td class="target-name">edw.opex.fact_assembled_activities + _hist</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
+    <td class="notes-text">WFM scheduling data. Uses DDExternalTaskRangeSensor on assembled_daily DAG. SLA validation included (1h).</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Assembled (API)</td>
+    <td class="upstream-text">External DAG: assembled_daily</td>
+    <td class="dag-name">fact_assembled_share_refresh</td>
+    <td class="target-name">edw.opex.fact_assembled_share_refresh</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Assembled data share refresh.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Assembled (API)</td>
+    <td class="upstream-text">External DAG: assembled_daily</td>
+    <td class="dag-name">fact_assembled_timeoff_audit</td>
+    <td class="target-name">edw.opex.fact_assembled_timeoff_audit</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Assembled time-off audit data.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>MaestroQA (SF share)</td>
+    <td class="upstream-text">maestro.maestro.templates, sections, questions, question_scores, answers, section_scores, option_selections, etc.</td>
+    <td class="dag-name">fact_opex_maestro_qa_daily</td>
+    <td class="target-name">edw.opex.fact_opex_maestro_qa_daily</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">QA rubric scores from MaestroQA Snowflake data share. Depends on DST and DSU.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>MaestroQA (SF share)</td>
+    <td class="upstream-text">maestro.maestro.* (same data share)</td>
+    <td class="dag-name">fact_opex_maestro_qa_badged</td>
+    <td class="target-name">edw.opex.fact_opex_maestro_qa_badged</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Badge-level QA from MaestroQA.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Observe AI (SF share)</td>
+    <td class="upstream-text">observeai.observeai.dd_autoqa_evaluations, dd_autoqa_evaluations_response</td>
+    <td class="dag-name">fact_oai_dd_autoqa_evaluations</td>
+    <td class="target-name">edw.opex.fact_oai_dd_autoqa_evaluations + _response</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">AutoQA evaluations from Observe AI. Multiple downstream DAGs depend on this for unified QA.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Observe AI (SF share)</td>
+    <td class="upstream-text">Multiple edw.opex.fact_oai_dd_* tables (autoqa, interactions, templates, sentiment)</td>
+    <td class="dag-name">fact_oai_unified_qa</td>
+    <td class="target-name">edw.opex.fact_oai_unified_qa</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Unified QA aggregation across all Observe AI sources. 9 upstream sensors.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Observe AI (SF share)</td>
+    <td class="upstream-text">observeai.observeai.dd_interactions_transcripts</td>
+    <td class="dag-name">fact_oai_dd_interactions_transcripts</td>
+    <td class="target-name">edw.opex.fact_oai_dd_interactions_transcripts</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Observe AI interaction transcripts.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Observe AI (SF share)</td>
+    <td class="upstream-text">observeai.observeai.dd_coachings</td>
+    <td class="dag-name">fact_oai_dd_coachings</td>
+    <td class="target-name">edw.opex.fact_oai_dd_coachings</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Observe AI coaching data.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Sprout Social (API)</td>
+    <td class="upstream-text">https://api.sproutsocial.com (3-day rolling window, PythonOperator)</td>
+    <td class="dag-name">dimension_opex_sprout_cases</td>
+    <td class="target-name">edw.opex.dimension_opex_sprout_cases</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
+    <td class="notes-text">Direct API call via PythonOperator. Auth via Vault. SCD2 pattern. API rate limits could cause failures. No circuit breaker.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Sprout Social (API)</td>
+    <td class="upstream-text">https://api.sproutsocial.com (users, topics, teams, tags, queues, groups, messages)</td>
+    <td class="dag-name">dimension_opex_sprout_* (7 DAGs)</td>
+    <td class="target-name">edw.opex.dimension_opex_sprout_* (7 tables)</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
+    <td class="notes-text">7 additional Sprout Social dimension DAGs using PythonOperator API calls. Same auth dependency.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Persona (API)</td>
+    <td class="upstream-text">https://api.withpersona.com (Cases search API, 1-day window, PythonOperator)</td>
+    <td class="dag-name">dimension_opex_persona_cases_api</td>
+    <td class="target-name">edw.opex.dimension_opex_persona_cases_api</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
+    <td class="notes-text">Direct API call. Auth via Vault persona_api_secret. SCD2. 8 concurrent workers. No circuit breaker.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Persona (API)</td>
+    <td class="upstream-text">https://api.withpersona.com (Templates list API)</td>
+    <td class="dag-name">dimension_opex_persona_templates</td>
+    <td class="target-name">edw.opex.dimension_opex_persona_templates</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
+    <td class="notes-text">Persona templates dimension. Same API auth dependency.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Checkr (Data Int. 3P)</td>
+    <td class="upstream-text">edw.data_integrations_3p.checkr_reports_v1 (Delta Lake)</td>
+    <td class="dag-name">dl_fact_opex_checkr_reports</td>
+    <td class="target-name">edw.checkr_pii.fact_opex_checkr_reports</td>
+    <td><span class="pill-sm high">Tier 1 (priority: 200)</span></td>
+    <td class="notes-text">Background check reports via Data Integrations 3P. Uses DLSparkSQLTransformerOperator + Pepto egress. 10 sub-report DAGs depend on this.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Stripe (Radar)</td>
+    <td class="upstream-text">risk_data_platform_prod.risk_entity (Delta Lake)</td>
+    <td class="dag-name">dl_fact_fraud_stripe_radar_percentile_score</td>
+    <td class="target-name">edw_opex.dl_fact_fraud_stripe_radar_percentile_score + _current</td>
+    <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
+    <td class="notes-text">Stripe Radar percentile scores. Databricks + Snowflake egress. Critical for fraud scoring.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>MaxMind (API + S3)</td>
+    <td class="upstream-text">MaxMind GeoIP2 API download (6 CSV datasets) &rarr; S3 &rarr; Snowflake COPY INTO</td>
+    <td class="dag-name">maxmind_ip_ingestion</td>
+    <td class="target-name">edw.opex.geoip2_* / geolite2_* (14 tables)</td>
+    <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
+    <td class="notes-text">IP geolocation data. Weekly schedule (Tuesdays). Used for Dx fraud composite scoring.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Google Sheets (API)</td>
+    <td class="upstream-text">Google Sheet: 'Gsheet Opex Documentation' (DdGSheetToSnowflakeOperator)</td>
+    <td class="dag-name">gsheets_documentation_dashboard_refresh</td>
+    <td class="target-name">proddb.public.fact_gsheet_dashboard / _revision / _tabs / _item_tabs</td>
+    <td><span class="pill-sm default">Tier 1 (low alert)</span></td>
+    <td class="notes-text">Documentation dashboard from Google Sheets. Low criticality.</td>
+  </tr>
+  <tr class="row-danger" data-risk="high">
+    <td>Google Sheets (API)</td>
+    <td class="upstream-text">Google Sheet key: 1PZwivbewTONZJrIvUCiAL67ACyjfqGQZ6RswKPq1aTo + defect ownership sheet</td>
+    <td class="dag-name">fact_upload_customer_experience_tables</td>
+    <td class="target-name">edw.opex.dim_ace_ctl_issue_taxonomy / dim_ace_ctl_theme_taxonomy / dim_ace_ctl_support_agent_taxonomy / dim_acronyms / dim_dd_jargon / defect_ownership_mapping</td>
+    <td><span class="pill-sm critical">Tier 1 (criticality: high)</span></td>
+    <td class="notes-text">CRITICAL: ACE CTL taxonomy tables from Google Sheets. criticality: high. Contact: ravi.ganta@doordash.com.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Google Sheets (API)</td>
+    <td class="upstream-text">Google Sheet (master ATO tracking)</td>
+    <td class="dag-name">fact_gsheet_master_ato_mx_tracking</td>
+    <td class="target-name">edw.opex.fact_gsheet_master_ato_mx_tracking</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">ATO merchant tracking from Google Sheets.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Cornerstone (SF share)</td>
+    <td class="upstream-text">SDS_CORNERSTONE.PROD.USERS_CORE, SDS_CORNERSTONE.PROD.timezone_core</td>
+    <td class="dag-name">dimension_opex_cornerstone_users</td>
+    <td class="target-name">edw.opex.dimension_opex_cornerstone_users</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">LMS user data from Cornerstone Snowflake data share. Depends on dimension_salesforce_users.</td>
+  </tr>
+  <tr data-risk="low">
+    <td>Cornerstone (SF share)</td>
+    <td class="upstream-text">SDS_CORNERSTONE.PROD.* (instructors, training data)</td>
+    <td class="dag-name">dimension_opex_cornerstone_instructors + training_tx_metrics_daily</td>
+    <td class="target-name">edw.opex.dimension_opex_cornerstone_instructors + fact_opex_cornerstone_training_tx_metrics_daily</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
+    <td class="notes-text">Cornerstone instructors and training completion metrics.</td>
+  </tr>
+  <tr class="row-warning" data-risk="medium">
+    <td>Arize AI (S3/Delta)</td>
+    <td class="upstream-text">hive_metastore.edw_opex_staging.support_automation_ai_agent_ml_observablity_staging (External Delta &rarr; S3)</td>
+    <td class="dag-name">dl_fact_arize_ml_observability</td>
+    <td class="target-name">edw.opex.fact_arize_ml_observability</td>
+    <td><span class="pill-sm high">Tier 1 (criticality: medium)</span></td>
+    <td class="notes-text">Arize Data Fabric syncs LLM trace data to S3 every 60 min. ~1400 columns. Temporary solution pending TPDI connector.</td>
+  </tr>
+</tbody>
+</table>
+
+<hr class="divider">
+
+<h2>Source System Breakdown</h2>
+<div class="source-cards" id="source-cards"></div>
+
+<hr class="divider">
+
+<h2>Recommended Data Contract SLAs</h2>
+<table>
+<thead>
+  <tr>
+    <th>Source System</th>
+    <th>Ingestion Method</th>
+    <th>Proposed SLA</th>
+    <th>Current Gap</th>
+    <th>Priority</th>
+  </tr>
+</thead>
+<tbody>
+  <tr class="row-danger">
+    <td>Salesforce (all objects)</td>
+    <td>Fivetran sync &rarr; proddb.public</td>
+    <td>Data available by 06:00 UTC daily</td>
+    <td>No formal SLA; delays cascade to 30+ DAGs</td>
+    <td><span class="pill-sm p0">P0</span></td>
+  </tr>
+  <tr class="row-danger">
+    <td>Amazon Connect CTR</td>
+    <td>Fivetran sync &rarr; proddb.public</td>
+    <td>Data available within 90 min of contact close</td>
+    <td>Hourly DAG but no upstream freshness guarantee</td>
+    <td><span class="pill-sm p0">P0</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Checkr Reports</td>
+    <td>Data Integrations 3P &rarr; Delta Lake</td>
+    <td>Data available by 10:00 UTC daily</td>
+    <td>No explicit SLA on data_integrations_3p.checkr_reports_v1</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Stripe Radar Scores</td>
+    <td>risk_data_platform_prod &rarr; Delta Lake</td>
+    <td>Data available by 09:00 UTC daily</td>
+    <td>Sensor timeout is 2h but no upstream commitment</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Sprout Social</td>
+    <td>Direct REST API (PythonOperator)</td>
+    <td>API uptime 99.9%; rate limit headroom</td>
+    <td>No SLA; no circuit breaker; API token in Vault</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Persona</td>
+    <td>Direct REST API (PythonOperator)</td>
+    <td>API uptime 99.9%; rate limit headroom</td>
+    <td>No SLA; concurrent workers may hit rate limits</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr>
+    <td>Observe AI</td>
+    <td>Snowflake data share (observeai.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>MaestroQA</td>
+    <td>Snowflake data share (maestro.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>Cornerstone</td>
+    <td>Snowflake data share (SDS_CORNERSTONE.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>Google Sheets</td>
+    <td>DdGSheetToSnowflakeOperator</td>
+    <td>Manual refresh; no SLA needed</td>
+    <td>N/A (manual source)</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+  <tr>
+    <td>MaxMind</td>
+    <td>API download &rarr; S3 &rarr; COPY INTO</td>
+    <td>Weekly refresh acceptable</td>
+    <td>N/A (weekly schedule sufficient)</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+  <tr>
+    <td>Arize AI</td>
+    <td>S3 external Delta table</td>
+    <td>Data available within 2h of trace emission</td>
+    <td>Temporary solution; pending TPDI connector</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+</tbody>
+</table>
+
+<hr class="divider">
+
+<div class="callout warning">
+  <div class="callout-title">Action Items for Data Integrations Team</div>
+  <ol>
+    <li>Establish a formal SLA for <strong>Salesforce Fivetran syncs</strong> (target: 06:00 UTC) &mdash; this is the root cause of cascading dimension delays.</li>
+    <li>Add <strong>freshness monitoring</strong> on proddb.public.fact_salesforce_amazon_connect_contact_trace with alerting when data is stale beyond 2 hours.</li>
+    <li>For <strong>Sprout Social and Persona API DAGs</strong>: implement retry circuit breakers, token rotation monitoring, and partial-failure recovery.</li>
+    <li>Formalize <strong>Snowflake data share SLAs</strong> with MaestroQA, Observe AI, and Cornerstone vendors.</li>
+    <li>Upgrade <strong>fact_upload_customer_experience_tables</strong> (Google Sheets) to a more robust ingestion pattern given its criticality: high marking.</li>
+  </ol>
+</div>
+
+<p class="footer">Generated May 13, 2026 &middot; Audit scope: airflow/custom_dags/opex/etl/ (2,262 files scanned) &middot; Default data_tier across all DAG args: DataTier.TIER_1</p>
+
+<script>
+const sources = {};
+document.querySelectorAll('#dep-table tbody tr').forEach(row => {
+  const src = row.cells[0].textContent.split('(')[0].trim();
+  const risk = row.dataset.risk;
+  if (!sources[src]) sources[src] = { count: 0, high: 0 };
+  sources[src].count++;
+  if (risk === 'high') sources[src].high++;
+});
+
+const container = document.getElementById('source-cards');
+Object.entries(sources).forEach(([name, data]) => {
+  const card = document.createElement('div');
+  card.className = 'source-card';
+  const badge = data.high > 0
+    ? `<span class="pill-sm critical">${data.high} high risk</span>`
+    : `<span class="pill-sm" style="background:rgba(63,185,80,0.15);color:#3fb950">OK</span>`;
+  card.innerHTML = `
+    <div>
+      <div class="source-card-name">${name}</div>
+      <div class="source-card-count">${data.count} pipeline${data.count > 1 ? 's' : ''}</div>
+    </div>
+    ${badge}`;
+  container.appendChild(card);
+});
+
+function filterRows(risk, btn) {
+  document.querySelectorAll('.filter-bar .pill').forEach(p => {
+    p.className = 'pill';
+  });
+  if (risk === 'high') btn.className = 'pill active-danger';
+  else if (risk === 'medium') btn.className = 'pill active-warning';
+  else if (risk === 'low') btn.className = 'pill active-success';
+  else btn.className = 'pill active';
+
+  document.querySelectorAll('#dep-table tbody tr').forEach(row => {
+    if (risk === 'all' || row.dataset.risk === risk) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>
