@@ -142,10 +142,10 @@
   .pill-sm.critical { background: rgba(248,81,73,0.15); color: var(--danger); }
   .pill-sm.high { background: rgba(210,153,34,0.15); color: var(--warning); }
   .pill-sm.default { background: rgba(139,148,158,0.15); color: var(--text-secondary); }
-  .pill-sm.p0 { background: var(--danger); color: #fff; }
-  .pill-sm.p1 { background: var(--warning); color: #000; }
-  .pill-sm.p2 { background: rgba(88,166,255,0.2); color: var(--accent); }
-  .pill-sm.p3 { background: rgba(139,148,158,0.2); color: var(--text-secondary); }
+  .pill-sm.p0, .pill-sm.t0 { background: var(--danger); color: #fff; }
+  .pill-sm.p1, .pill-sm.t1 { background: var(--warning); color: #000; }
+  .pill-sm.p2, .pill-sm.t2 { background: rgba(88,166,255,0.2); color: var(--accent); }
+  .pill-sm.p3, .pill-sm.t3 { background: rgba(139,148,158,0.2); color: var(--text-secondary); }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -253,9 +253,10 @@
     <th>Source System</th>
     <th>Ingestion Method</th>
     <th>Dependent Pipelines</th>
+    <th>Current Tier</th>
     <th>Proposed SLA</th>
     <th>Current Gap</th>
-    <th>Priority</th>
+    <th>Suggested Priority</th>
     <th>Recommended POC / Slack Channel</th>
   </tr>
 </thead>
@@ -264,108 +265,120 @@
     <td>Salesforce (all objects)</td>
     <td>Fivetran sync &rarr; proddb.public</td>
     <td><strong>6 direct</strong> + 30+ downstream</td>
+    <td><span class="pill-sm critical">Tier 1 (V2_CRITICAL)</span></td>
     <td>Data available by 06:00 UTC daily</td>
     <td>No formal SLA; delays cascade to 30+ DAGs</td>
-    <td><span class="pill-sm p0">P0</span></td>
+    <td><span class="pill-sm t0">T0</span></td>
     <td>#data-integrations-support<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations Team (Fivetran admin)</span></td>
   </tr>
   <tr class="row-danger">
     <td>Amazon Connect CTR</td>
     <td>Fivetran sync &rarr; proddb.public</td>
     <td><strong>3</strong> (enriched, routing, agg)</td>
+    <td><span class="pill-sm critical">Tier 1 (CRITICAL)</span></td>
     <td>Data available within 90 min of contact close</td>
     <td>Hourly DAG but no upstream freshness guarantee</td>
-    <td><span class="pill-sm p0">P0</span></td>
+    <td><span class="pill-sm t0">T0</span></td>
     <td>#data-integrations-support<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations Team (Fivetran admin)</span></td>
   </tr>
   <tr class="row-warning">
     <td>Checkr Reports</td>
     <td>Data Integrations 3P &rarr; Delta Lake</td>
     <td><strong>1</strong> + 10 sub-report DAGs</td>
+    <td><span class="pill-sm high">Tier 1 (priority: 200)</span></td>
     <td>Data available by 10:00 UTC daily</td>
     <td>No explicit SLA on data_integrations_3p.checkr_reports_v1</td>
-    <td><span class="pill-sm p1">P1</span></td>
+    <td><span class="pill-sm t1">T1</span></td>
     <td>#data-integrations-3p<br><span style="color:var(--text-tertiary);font-size:11px">POC: Data Integrations 3P Team</span></td>
   </tr>
   <tr class="row-warning">
     <td>Stripe Radar Scores</td>
     <td>risk_data_platform_prod &rarr; Delta Lake</td>
     <td><strong>1</strong> (+ _current view)</td>
+    <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
     <td>Data available by 09:00 UTC daily</td>
     <td>Sensor timeout is 2h but no upstream commitment</td>
-    <td><span class="pill-sm p1">P1</span></td>
+    <td><span class="pill-sm t1">T1</span></td>
     <td>#risk-data-platform<br><span style="color:var(--text-tertiary);font-size:11px">POC: Risk Data Platform Team</span></td>
   </tr>
   <tr class="row-warning">
     <td>Sprout Social</td>
     <td>Direct REST API (PythonOperator)</td>
     <td><strong>8</strong> (cases + 7 dims)</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
     <td>API uptime 99.9%; rate limit headroom</td>
     <td>No SLA; no circuit breaker; API token in Vault</td>
-    <td><span class="pill-sm p1">P1</span></td>
+    <td><span class="pill-sm t1">T1</span></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Opex Data Eng (API owner)</span></td>
   </tr>
   <tr class="row-warning">
     <td>Persona</td>
     <td>Direct REST API (PythonOperator)</td>
     <td><strong>2</strong> (cases + templates)</td>
+    <td><span class="pill-sm default">Tier 1 (V2 default)</span></td>
     <td>API uptime 99.9%; rate limit headroom</td>
     <td>No SLA; concurrent workers may hit rate limits</td>
-    <td><span class="pill-sm p1">P1</span></td>
+    <td><span class="pill-sm t1">T1</span></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Opex Data Eng (API owner)</span></td>
   </tr>
   <tr>
     <td>Observe AI</td>
     <td>Snowflake data share (observeai.*)</td>
     <td><strong>4</strong> (autoqa, transcripts, coaching, unified)</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
+    <td><span class="pill-sm t2">T2</span></td>
     <td>#observe-ai-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: Observe AI Account Rep + DI Team</span></td>
   </tr>
   <tr>
     <td>MaestroQA</td>
     <td>Snowflake data share (maestro.*)</td>
     <td><strong>2</strong> (daily + badged)</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
+    <td><span class="pill-sm t2">T2</span></td>
     <td>#maestroqa-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: MaestroQA Account Rep + DI Team</span></td>
   </tr>
   <tr>
     <td>Cornerstone</td>
     <td>Snowflake data share (SDS_CORNERSTONE.*)</td>
     <td><strong>3</strong> (users, instructors, training)</td>
+    <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
+    <td><span class="pill-sm t2">T2</span></td>
     <td>#cornerstone-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: Cornerstone Account Rep + DI Team</span></td>
   </tr>
   <tr>
     <td>Google Sheets</td>
     <td>DdGSheetToSnowflakeOperator</td>
     <td><strong>3</strong> (docs, CX tables, ATO)</td>
+    <td><span class="pill-sm critical">Tier 1 (criticality: high)</span></td>
     <td>Manual refresh; no SLA needed</td>
     <td>N/A (manual source)</td>
-    <td><span class="pill-sm p3">P3</span></td>
+    <td><span class="pill-sm t3">T3</span></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Sheet owners (see DAG contacts)</span></td>
   </tr>
   <tr>
     <td>MaxMind</td>
     <td>API download &rarr; S3 &rarr; COPY INTO</td>
     <td><strong>1</strong> (14 target tables)</td>
+    <td><span class="pill-sm default">Tier 1 (fraud default)</span></td>
     <td>Weekly refresh acceptable</td>
     <td>N/A (weekly schedule sufficient)</td>
-    <td><span class="pill-sm p3">P3</span></td>
+    <td><span class="pill-sm t3">T3</span></td>
     <td>#fraud-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Fraud Data Eng Team</span></td>
   </tr>
   <tr>
     <td>Arize AI</td>
     <td>S3 external Delta table</td>
     <td><strong>1</strong></td>
+    <td><span class="pill-sm high">Tier 1 (criticality: medium)</span></td>
     <td>Data available within 2h of trace emission</td>
     <td>Temporary solution; pending TPDI connector</td>
-    <td><span class="pill-sm p3">P3</span></td>
+    <td><span class="pill-sm t3">T3</span></td>
     <td>#support-automation-ai<br><span style="color:var(--text-tertiary);font-size:11px">POC: Support Automation AI Team</span></td>
   </tr>
 </tbody>
