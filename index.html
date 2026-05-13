@@ -200,6 +200,39 @@
   .source-card-name { font-weight: 600; font-size: 14px; }
   .source-card-count { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
   .footer { color: var(--text-tertiary); font-size: 12px; margin-top: 32px; }
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .feedback-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #58a6ff, #3b82f6);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 0.15s, transform 0.15s;
+    box-shadow: 0 2px 8px rgba(88,166,255,0.3);
+  }
+  .feedback-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  .feedback-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
   @media (max-width: 900px) {
     body { padding: 16px; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -222,8 +255,16 @@
 </head>
 <body>
 
-<h1>Opex ETL: 3rd Party Dependency Audit</h1>
-<p class="subtitle">Data Contract reference for the Data Integrations team &middot; Scanned from airflow/custom_dags/opex/etl/ &middot; 2,262 files audited</p>
+<div class="header-row">
+  <div>
+    <h1>Opex ETL: 3rd Party Dependency Audit</h1>
+    <p class="subtitle">Data Contract reference for the Data Integrations team &middot; Scanned from airflow/custom_dags/opex/etl/ &middot; 2,262 files audited</p>
+  </div>
+  <a class="feedback-btn" href="https://docs.google.com/forms/d/e/REPLACE_WITH_YOUR_FORM_ID/viewform" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12zm-9-4h2v2h-2v-2zm0-6h2v4h-2V6z"/></svg>
+    Leave Feedback
+  </a>
+</div>
 
 <div class="stats-grid">
   <div class="stat-card">
