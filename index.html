@@ -197,6 +197,107 @@
 
 <hr class="divider">
 
+<h2>TL;DR Recommended Data Dependency SLA</h2>
+<table>
+<thead>
+  <tr>
+    <th>Source System</th>
+    <th>Ingestion Method</th>
+    <th>Proposed SLA</th>
+    <th>Current Gap</th>
+    <th>Priority</th>
+  </tr>
+</thead>
+<tbody>
+  <tr class="row-danger">
+    <td>Salesforce (all objects)</td>
+    <td>Fivetran sync &rarr; proddb.public</td>
+    <td>Data available by 06:00 UTC daily</td>
+    <td>No formal SLA; delays cascade to 30+ DAGs</td>
+    <td><span class="pill-sm p0">P0</span></td>
+  </tr>
+  <tr class="row-danger">
+    <td>Amazon Connect CTR</td>
+    <td>Fivetran sync &rarr; proddb.public</td>
+    <td>Data available within 90 min of contact close</td>
+    <td>Hourly DAG but no upstream freshness guarantee</td>
+    <td><span class="pill-sm p0">P0</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Checkr Reports</td>
+    <td>Data Integrations 3P &rarr; Delta Lake</td>
+    <td>Data available by 10:00 UTC daily</td>
+    <td>No explicit SLA on data_integrations_3p.checkr_reports_v1</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Stripe Radar Scores</td>
+    <td>risk_data_platform_prod &rarr; Delta Lake</td>
+    <td>Data available by 09:00 UTC daily</td>
+    <td>Sensor timeout is 2h but no upstream commitment</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Sprout Social</td>
+    <td>Direct REST API (PythonOperator)</td>
+    <td>API uptime 99.9%; rate limit headroom</td>
+    <td>No SLA; no circuit breaker; API token in Vault</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr class="row-warning">
+    <td>Persona</td>
+    <td>Direct REST API (PythonOperator)</td>
+    <td>API uptime 99.9%; rate limit headroom</td>
+    <td>No SLA; concurrent workers may hit rate limits</td>
+    <td><span class="pill-sm p1">P1</span></td>
+  </tr>
+  <tr>
+    <td>Observe AI</td>
+    <td>Snowflake data share (observeai.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>MaestroQA</td>
+    <td>Snowflake data share (maestro.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>Cornerstone</td>
+    <td>Snowflake data share (SDS_CORNERSTONE.*)</td>
+    <td>Data share refresh by 12:00 UTC daily</td>
+    <td>No formal SLA on data share freshness</td>
+    <td><span class="pill-sm p2">P2</span></td>
+  </tr>
+  <tr>
+    <td>Google Sheets</td>
+    <td>DdGSheetToSnowflakeOperator</td>
+    <td>Manual refresh; no SLA needed</td>
+    <td>N/A (manual source)</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+  <tr>
+    <td>MaxMind</td>
+    <td>API download &rarr; S3 &rarr; COPY INTO</td>
+    <td>Weekly refresh acceptable</td>
+    <td>N/A (weekly schedule sufficient)</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+  <tr>
+    <td>Arize AI</td>
+    <td>S3 external Delta table</td>
+    <td>Data available within 2h of trace emission</td>
+    <td>Temporary solution; pending TPDI connector</td>
+    <td><span class="pill-sm p3">P3</span></td>
+  </tr>
+</tbody>
+</table>
+
+<hr class="divider">
+
 <div class="callout danger">
   <div class="callout-title">Single Points of Failure Identified</div>
   <p><strong>dimension_salesforce_users</strong> &mdash; 30+ downstream DAGs depend on this single dimension. A delay in the Salesforce Fivetran sync at 07:15 UTC cascades across nearly every support, fraud, and QA pipeline. This is the primary cause of the dimension delivery delays.</p>
@@ -485,109 +586,6 @@
 
 <h2>Source System Breakdown</h2>
 <div class="source-cards" id="source-cards"></div>
-
-<hr class="divider">
-
-<h2>Recommended Data Contract SLAs</h2>
-<table>
-<thead>
-  <tr>
-    <th>Source System</th>
-    <th>Ingestion Method</th>
-    <th>Proposed SLA</th>
-    <th>Current Gap</th>
-    <th>Priority</th>
-  </tr>
-</thead>
-<tbody>
-  <tr class="row-danger">
-    <td>Salesforce (all objects)</td>
-    <td>Fivetran sync &rarr; proddb.public</td>
-    <td>Data available by 06:00 UTC daily</td>
-    <td>No formal SLA; delays cascade to 30+ DAGs</td>
-    <td><span class="pill-sm p0">P0</span></td>
-  </tr>
-  <tr class="row-danger">
-    <td>Amazon Connect CTR</td>
-    <td>Fivetran sync &rarr; proddb.public</td>
-    <td>Data available within 90 min of contact close</td>
-    <td>Hourly DAG but no upstream freshness guarantee</td>
-    <td><span class="pill-sm p0">P0</span></td>
-  </tr>
-  <tr class="row-warning">
-    <td>Checkr Reports</td>
-    <td>Data Integrations 3P &rarr; Delta Lake</td>
-    <td>Data available by 10:00 UTC daily</td>
-    <td>No explicit SLA on data_integrations_3p.checkr_reports_v1</td>
-    <td><span class="pill-sm p1">P1</span></td>
-  </tr>
-  <tr class="row-warning">
-    <td>Stripe Radar Scores</td>
-    <td>risk_data_platform_prod &rarr; Delta Lake</td>
-    <td>Data available by 09:00 UTC daily</td>
-    <td>Sensor timeout is 2h but no upstream commitment</td>
-    <td><span class="pill-sm p1">P1</span></td>
-  </tr>
-  <tr class="row-warning">
-    <td>Sprout Social</td>
-    <td>Direct REST API (PythonOperator)</td>
-    <td>API uptime 99.9%; rate limit headroom</td>
-    <td>No SLA; no circuit breaker; API token in Vault</td>
-    <td><span class="pill-sm p1">P1</span></td>
-  </tr>
-  <tr class="row-warning">
-    <td>Persona</td>
-    <td>Direct REST API (PythonOperator)</td>
-    <td>API uptime 99.9%; rate limit headroom</td>
-    <td>No SLA; concurrent workers may hit rate limits</td>
-    <td><span class="pill-sm p1">P1</span></td>
-  </tr>
-  <tr>
-    <td>Observe AI</td>
-    <td>Snowflake data share (observeai.*)</td>
-    <td>Data share refresh by 12:00 UTC daily</td>
-    <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
-  </tr>
-  <tr>
-    <td>MaestroQA</td>
-    <td>Snowflake data share (maestro.*)</td>
-    <td>Data share refresh by 12:00 UTC daily</td>
-    <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
-  </tr>
-  <tr>
-    <td>Cornerstone</td>
-    <td>Snowflake data share (SDS_CORNERSTONE.*)</td>
-    <td>Data share refresh by 12:00 UTC daily</td>
-    <td>No formal SLA on data share freshness</td>
-    <td><span class="pill-sm p2">P2</span></td>
-  </tr>
-  <tr>
-    <td>Google Sheets</td>
-    <td>DdGSheetToSnowflakeOperator</td>
-    <td>Manual refresh; no SLA needed</td>
-    <td>N/A (manual source)</td>
-    <td><span class="pill-sm p3">P3</span></td>
-  </tr>
-  <tr>
-    <td>MaxMind</td>
-    <td>API download &rarr; S3 &rarr; COPY INTO</td>
-    <td>Weekly refresh acceptable</td>
-    <td>N/A (weekly schedule sufficient)</td>
-    <td><span class="pill-sm p3">P3</span></td>
-  </tr>
-  <tr>
-    <td>Arize AI</td>
-    <td>S3 external Delta table</td>
-    <td>Data available within 2h of trace emission</td>
-    <td>Temporary solution; pending TPDI connector</td>
-    <td><span class="pill-sm p3">P3</span></td>
-  </tr>
-</tbody>
-</table>
-
-<hr class="divider">
 
 <div class="callout warning">
   <div class="callout-title">Action Items for Data Integrations Team</div>
