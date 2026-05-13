@@ -666,8 +666,51 @@
 
 <hr class="divider">
 
-<h2>Source System Breakdown</h2>
-<div class="source-cards" id="source-cards"></div>
+<h2>Suggested Priority Rubric</h2>
+<p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">The suggested priorities (T0&ndash;T3) were derived by scoring each source system across three dimensions:</p>
+<p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;font-style:italic;"><strong style="color:var(--text)">Formula:</strong> Blast Radius &times; Ingestion Fragility &times; Criticality Flags in Code = Suggested Tier</p>
+
+<table>
+<thead>
+  <tr>
+    <th>Tier</th>
+    <th>Blast Radius</th>
+    <th>Ingestion Fragility</th>
+    <th>Code Signals</th>
+    <th>Sources</th>
+  </tr>
+</thead>
+<tbody>
+  <tr class="row-danger">
+    <td><span class="pill-sm t0">T0</span></td>
+    <td><strong>Very High.</strong> 30+ downstream DAGs depend on a single dimension (Salesforce). Amazon Connect CTR feeds routing, surveys, and SLA metrics &mdash; any delay cascades across nearly every support, fraud, and QA pipeline.</td>
+    <td><strong>High.</strong> Both flow through Fivetran with no formal upstream SLA. A sync delay or schema drift has no fallback.</td>
+    <td><code>criticality: high</code>, <code>EDW_OPEX_DEFAULT_DAG_ARGS_CRITICAL</code>, <code>priority_weight: 200</code></td>
+    <td>Salesforce, Amazon Connect</td>
+  </tr>
+  <tr class="row-warning">
+    <td><span class="pill-sm t1">T1</span></td>
+    <td><strong>High.</strong> Checkr has 10 sub-report DAGs downstream. Sprout Social spans 8 pipelines. Stripe Radar feeds fraud scoring.</td>
+    <td><strong>High.</strong> Sprout Social and Persona use direct REST API calls via PythonOperator with no circuit breaker or fallback cache. An API outage, rate limit, or token expiry causes full DAG failure with no partial recovery.</td>
+    <td><code>priority_weight: 200</code> (Checkr). Default Tier 1 for others, but operationally fragile due to raw API integration pattern.</td>
+    <td>Checkr, Stripe Radar, Sprout Social, Persona</td>
+  </tr>
+  <tr>
+    <td><span class="pill-sm t2">T2</span></td>
+    <td><strong>Moderate.</strong> 2&ndash;4 pipelines each. Observe AI&rsquo;s unified QA aggregation has 9 upstream sensors but is self-contained within the QA domain.</td>
+    <td><strong>Low.</strong> All use Snowflake data shares &mdash; inherently stable (no auth tokens, no rate limits, no API calls). Risk is limited to vendor-side data freshness.</td>
+    <td>Default <code>Tier 1</code> with no elevated criticality flags. No explicit SLA or priority overrides in code.</td>
+    <td>Observe AI, MaestroQA, Cornerstone</td>
+  </tr>
+  <tr>
+    <td><span class="pill-sm t3">T3</span></td>
+    <td><strong>Low.</strong> 1&ndash;3 pipelines each. Downstream impact is narrow or domain-specific.</td>
+    <td><strong>Low.</strong> Google Sheets are manually maintained (delays are human-driven, not systemic). MaxMind runs weekly and the cadence is sufficient. Arize AI is explicitly a temporary solution pending a TPDI connector.</td>
+    <td>Default <code>Tier 1</code>. Google Sheets CX tables have <code>criticality: high</code> but the source is manual/human-owned, limiting systemic risk.</td>
+    <td>Google Sheets, MaxMind, Arize AI</td>
+  </tr>
+</tbody>
+</table>
 
 <p class="footer">Generated May 13, 2026 &middot; Audit scope: airflow/custom_dags/opex/etl/ (2,262 files scanned) &middot; Default data_tier across all DAG args: DataTier.TIER_1</p>
 
@@ -682,22 +725,6 @@ document.querySelectorAll('#dep-table tbody tr').forEach(row => {
   if (!sources[src]) sources[src] = { count: 0, high: 0 };
   sources[src].count++;
   if (risk === 'high') sources[src].high++;
-});
-
-const container = document.getElementById('source-cards');
-Object.entries(sources).forEach(([name, data]) => {
-  const card = document.createElement('div');
-  card.className = 'source-card';
-  const badge = data.high > 0
-    ? `<span class="pill-sm critical">${data.high} high risk</span>`
-    : `<span class="pill-sm" style="background:rgba(63,185,80,0.15);color:#3fb950">OK</span>`;
-  card.innerHTML = `
-    <div>
-      <div class="source-card-name">${name}</div>
-      <div class="source-card-count">${data.count} pipeline${data.count > 1 ? 's' : ''}</div>
-    </div>
-    ${badge}`;
-  container.appendChild(card);
 });
 
 const sourceFilterBar = document.getElementById('source-filter-bar');
