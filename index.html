@@ -719,6 +719,7 @@
     <th>Ingestion Fragility</th>
     <th>Code Signals</th>
     <th>Sources</th>
+    <th>Expected Support Response</th>
   </tr>
 </thead>
 <tbody>
@@ -728,6 +729,10 @@
     <td><strong>High.</strong> Both flow through Fivetran with no formal upstream SLA. A sync delay or schema drift has no fallback.</td>
     <td><code>criticality: high</code>, <code>EDW_OPEX_DEFAULT_DAG_ARGS_CRITICAL</code>, <code>priority_weight: 200</code></td>
     <td>Salesforce, Amazon Connect</td>
+    <td>
+      <strong>Immediate response.</strong> On-call for the 3rd party team is paged with <span class="pill-sm t0">HIGH</span> priority. A dedicated incident channel is created with all impacted stakeholders (Opex, cross-functional partners, and the responsible 3P team) for real-time coordination and status updates.<br>
+      <strong>Resolution SLA:</strong> Immediate
+    </td>
   </tr>
   <tr class="row-warning">
     <td><span class="pill-sm t1">T1</span></td>
@@ -735,6 +740,10 @@
     <td><strong>High.</strong> Sprout Social and Persona use direct REST API calls via PythonOperator with no circuit breaker or fallback cache. An API outage, rate limit, or token expiry causes full DAG failure with no partial recovery.</td>
     <td><code>priority_weight: 200</code> (Checkr). Default Tier 1 for others, but operationally fragile due to raw API integration pattern.</td>
     <td>Checkr, Stripe Radar, Sprout Social, Persona</td>
+    <td>
+      <strong>Same-day response.</strong> On-call for the 3rd party team is paged with <span class="pill-sm t1">MEDIUM</span> priority. A direct message is sent to the on-call with a link to the Rootly pager for tracking.<br>
+      <strong>Resolution SLA:</strong> 1 business day
+    </td>
   </tr>
   <tr>
     <td><span class="pill-sm t2">T2</span></td>
@@ -742,6 +751,10 @@
     <td><strong>Low.</strong> All use Snowflake data shares &mdash; inherently stable (no auth tokens, no rate limits, no API calls). Risk is limited to vendor-side data freshness.</td>
     <td>Default <code>Tier 1</code> with no elevated criticality flags. No explicit SLA or priority overrides in code.</td>
     <td>Observe AI, MaestroQA, Cornerstone</td>
+    <td>
+      <strong>Async response.</strong> A message is posted in the relevant 3rd party Slack channel describing the issue and expected impact.<br>
+      <strong>Resolution SLA:</strong> 2&ndash;3 business days
+    </td>
   </tr>
   <tr>
     <td><span class="pill-sm t3">T3</span></td>
@@ -749,6 +762,10 @@
     <td><strong>Low.</strong> Google Sheets are manually maintained (delays are human-driven, not systemic). MaxMind runs weekly and the cadence is sufficient. Arize AI is explicitly a temporary solution pending a TPDI connector.</td>
     <td>Default <code>Tier 1</code>. Google Sheets CX tables have <code>criticality: high</code> but the source is manual/human-owned, limiting systemic risk.</td>
     <td>Google Sheets, MaxMind, Arize AI</td>
+    <td>
+      <strong>No action required.</strong> Issues are tracked opportunistically. No on-call page or escalation needed.<br>
+      <strong>Resolution SLA:</strong> Best effort
+    </td>
   </tr>
 </tbody>
 </table>
