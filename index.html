@@ -373,18 +373,12 @@
 
 <hr class="divider">
 
-<div class="callout danger">
-  <div class="callout-title">Single Points of Failure Identified</div>
-  <p><strong>dimension_salesforce_users</strong> &mdash; 30+ downstream DAGs depend on this single dimension. A delay in the Salesforce Fivetran sync at 07:15 UTC cascades across nearly every support, fraud, and QA pipeline. This is the primary cause of the dimension delivery delays.</p>
-  <br>
-  <p><strong>fact_salesforce_amazon_connect_contact_trace (Fivetran)</strong> &mdash; The sole upstream source for Amazon Connect CTR data feeding routing profiles, surveys, and SLA metrics. Any Fivetran sync delay or schema drift causes missing data in Amazon Connect.</p>
-  <br>
-  <p><strong>Sprout Social / Persona API calls</strong> &mdash; Direct REST API calls via PythonOperator. No retry circuit breaker, no fallback cache. API rate limits, token expiry, or 3rd party outage = full DAG failure with no partial recovery.</p>
-</div>
-
-<hr class="divider">
-
 <h2>Dependency Inventory</h2>
+
+<div class="filter-bar" id="source-filter-bar">
+  <span class="filter-label">Filter by source:</span>
+  <button class="pill active" onclick="filterBySource('all', this)">All</button>
+</div>
 
 <div class="filter-bar">
   <span class="filter-label">Filter by risk:</span>
@@ -662,20 +656,12 @@
 <h2>Source System Breakdown</h2>
 <div class="source-cards" id="source-cards"></div>
 
-<div class="callout warning">
-  <div class="callout-title">Action Items for Data Integrations Team</div>
-  <ol>
-    <li>Establish a formal SLA for <strong>Salesforce Fivetran syncs</strong> (target: 06:00 UTC) &mdash; this is the root cause of cascading dimension delays.</li>
-    <li>Add <strong>freshness monitoring</strong> on proddb.public.fact_salesforce_amazon_connect_contact_trace with alerting when data is stale beyond 2 hours.</li>
-    <li>For <strong>Sprout Social and Persona API DAGs</strong>: implement retry circuit breakers, token rotation monitoring, and partial-failure recovery.</li>
-    <li>Formalize <strong>Snowflake data share SLAs</strong> with MaestroQA, Observe AI, and Cornerstone vendors.</li>
-    <li>Upgrade <strong>fact_upload_customer_experience_tables</strong> (Google Sheets) to a more robust ingestion pattern given its criticality: high marking.</li>
-  </ol>
-</div>
-
 <p class="footer">Generated May 13, 2026 &middot; Audit scope: airflow/custom_dags/opex/etl/ (2,262 files scanned) &middot; Default data_tier across all DAG args: DataTier.TIER_1</p>
 
 <script>
+let activeSource = 'all';
+let activeRisk = 'all';
+
 const sources = {};
 document.querySelectorAll('#dep-table tbody tr').forEach(row => {
   const src = row.cells[0].textContent.split('(')[0].trim();
@@ -701,22 +687,44 @@ Object.entries(sources).forEach(([name, data]) => {
   container.appendChild(card);
 });
 
+const sourceFilterBar = document.getElementById('source-filter-bar');
+Object.entries(sources).forEach(([name, data]) => {
+  const btn = document.createElement('button');
+  btn.className = 'pill';
+  btn.textContent = name + ' (' + data.count + ')';
+  btn.onclick = function() { filterBySource(name, this); };
+  sourceFilterBar.appendChild(btn);
+});
+
+function applyFilters() {
+  document.querySelectorAll('#dep-table tbody tr').forEach(row => {
+    const src = row.cells[0].textContent.split('(')[0].trim();
+    const risk = row.dataset.risk;
+    const matchSource = activeSource === 'all' || src === activeSource;
+    const matchRisk = activeRisk === 'all' || risk === activeRisk;
+    row.style.display = (matchSource && matchRisk) ? '' : 'none';
+  });
+}
+
+function filterBySource(source, btn) {
+  activeSource = source;
+  document.querySelectorAll('#source-filter-bar .pill').forEach(p => {
+    p.className = 'pill';
+  });
+  btn.className = 'pill active';
+  applyFilters();
+}
+
 function filterRows(risk, btn) {
-  document.querySelectorAll('.filter-bar .pill').forEach(p => {
+  activeRisk = risk;
+  document.querySelectorAll('.filter-bar:not(#source-filter-bar) .pill').forEach(p => {
     p.className = 'pill';
   });
   if (risk === 'high') btn.className = 'pill active-danger';
   else if (risk === 'medium') btn.className = 'pill active-warning';
   else if (risk === 'low') btn.className = 'pill active-success';
   else btn.className = 'pill active';
-
-  document.querySelectorAll('#dep-table tbody tr').forEach(row => {
-    if (risk === 'all' || row.dataset.risk === risk) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
+  applyFilters();
 }
 </script>
 </body>
