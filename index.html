@@ -381,24 +381,24 @@
     <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#opex-data-eng<br><span style="color:var(--text-tertiary);font-size:11px">POC: Opex Data Eng (API owner)</span></td>
   </tr>
-  <tr>
+  <tr class="row-danger">
     <td>Observe AI</td>
     <td>Snowflake data share (observeai.*)</td>
     <td><strong>4</strong> (autoqa, transcripts, coaching, unified)</td>
     <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><a class="tier-link" href="#rubric-t2" onclick="flashRubric('rubric-t2')"><span class="pill-sm t2">T2</span></a></td>
+    <td><a class="tier-link" href="#rubric-t0" onclick="flashRubric('rubric-t0')"><span class="pill-sm t0">T0</span></a></td>
     <td>#observe-ai-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: Observe AI Account Rep + DI Team</span></td>
   </tr>
-  <tr>
+  <tr class="row-warning">
     <td>MaestroQA</td>
     <td>Snowflake data share (maestro.*)</td>
     <td><strong>2</strong> (daily + badged)</td>
     <td><span class="pill-sm default">Tier 1 (default)</span></td>
     <td>Data share refresh by 12:00 UTC daily</td>
     <td>No formal SLA on data share freshness</td>
-    <td><a class="tier-link" href="#rubric-t2" onclick="flashRubric('rubric-t2')"><span class="pill-sm t2">T2</span></a></td>
+    <td><a class="tier-link" href="#rubric-t1" onclick="flashRubric('rubric-t1')"><span class="pill-sm t1">T1</span></a></td>
     <td>#maestroqa-vendor<br><span style="color:var(--text-tertiary);font-size:11px">POC: MaestroQA Account Rep + DI Team</span></td>
   </tr>
   <tr>
@@ -747,7 +747,7 @@
     <td><strong>Very High.</strong> 30+ downstream DAGs depend on a single dimension (Salesforce). Amazon Connect CTR feeds routing, surveys, and SLA metrics &mdash; any delay cascades across nearly every support, fraud, and QA pipeline.</td>
     <td><strong>High.</strong> Both flow through Fivetran with no formal upstream SLA. A sync delay or schema drift has no fallback.</td>
     <td><code>criticality: high</code>, <code>EDW_OPEX_DEFAULT_DAG_ARGS_CRITICAL</code>, <code>priority_weight: 200</code></td>
-    <td>Salesforce, Amazon Connect</td>
+    <td>Salesforce, Amazon Connect, Observe AI</td>
     <td>
       <strong>Immediate response.</strong> On-call for the 3rd party team is paged with <span class="pill-sm t0">HIGH</span> priority. A dedicated incident channel is created with all impacted stakeholders (Opex, cross-functional partners, and the responsible 3P team) for real-time coordination and status updates.<br>
       <strong>Resolution SLA:</strong> Immediate
@@ -758,7 +758,7 @@
     <td><strong>High.</strong> Checkr has 10 sub-report DAGs downstream. Sprout Social spans 8 pipelines. Stripe Radar feeds fraud scoring.</td>
     <td><strong>High.</strong> Sprout Social and Persona use direct REST API calls via PythonOperator with no circuit breaker or fallback cache. An API outage, rate limit, or token expiry causes full DAG failure with no partial recovery.</td>
     <td><code>priority_weight: 200</code> (Checkr). Default Tier 1 for others, but operationally fragile due to raw API integration pattern.</td>
-    <td>Checkr, Stripe Radar, Sprout Social, Persona</td>
+    <td>Checkr, Stripe Radar, Sprout Social, Persona, MaestroQA</td>
     <td>
       <strong>Same-day response.</strong> On-call for the 3rd party team is paged with <span class="pill-sm t1">MEDIUM</span> priority. A direct message is sent to the on-call with a link to the Rootly pager for tracking.<br>
       <strong>Resolution SLA:</strong> 1 business day
@@ -769,7 +769,7 @@
     <td><strong>Moderate.</strong> 2&ndash;4 pipelines each. Observe AI&rsquo;s unified QA aggregation has 9 upstream sensors but is self-contained within the QA domain.</td>
     <td><strong>Low.</strong> All use Snowflake data shares &mdash; inherently stable (no auth tokens, no rate limits, no API calls). Risk is limited to vendor-side data freshness.</td>
     <td>Default <code>Tier 1</code> with no elevated criticality flags. No explicit SLA or priority overrides in code.</td>
-    <td>Observe AI, MaestroQA, Cornerstone</td>
+    <td>Cornerstone</td>
     <td>
       <strong>Async response.</strong> A message is posted in the relevant 3rd party Slack channel describing the issue and expected impact.<br>
       <strong>Resolution SLA:</strong> 2&ndash;3 business days
